@@ -8,4 +8,6 @@ urlpatterns = patterns('',
 
     url(r'^$', 'hotel.views.mainPage'),
     url(r'^/(?P<hotel_id>[0-9]+)/$', 'hotel.views.hotelId'),
+    url(r'^/(?P<hotel_id>[0-9]+)/room/(?P<room_number>[0-9]+)/$', 'hotel.views.unlock_gate'),
+    url(r'^/(?P<hotel_id>[0-9]+)/(?P<room_type>[0-9]+)/$', 'hotel.views.bookRoom'),
 )
