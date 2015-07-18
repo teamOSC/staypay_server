@@ -1,3 +1,4 @@
 from django.shortcuts import render
 
-# Create your views here.
+
+# my functions know what you did in the app..
