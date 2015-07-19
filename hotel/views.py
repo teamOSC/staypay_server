@@ -8,8 +8,21 @@ from hotel.models import HotelRooms, Hotel, Appliances, Room
 # my functions know what you did in the app..
 
 def mainPage(request):
-    print "hello"
-    return HttpResponse('shubham')
+    lat = request.GET.get('lat')
+    print lat
+    lng = request.GET.get('lng')
+    print lng
+    data = {
+        'property_type': 'Hotels',
+        'lat': lat,
+        'lng': lng,
+        'from': 0,
+        'to': 30
+    }
+
+    val = requests.post('http://stayzilla.com/hotels', data=data)
+
+    return HttpResponse(json.dumps(val.json()))
 
 
 hotel_hard_code = {
@@ -52,9 +65,13 @@ def hotelId(request, hotel_id):
         hotel_data['rating'] = a.rating
         hotel_data['rooms'] = []
         b = HotelRooms.objects.filter(related_hotel_id=hotel_id)
+        print b
         for x in b:
             filler_dict = {}
-            av = Room.objects.filter(hotel_id=hotel_id, type_id=str(x.type_id), user='0')
+            try:
+                av = len(Room.objects.filter(hotel_id=hotel_id, type_id=str(x.type_id), user='0'))
+            except:
+                av = 0
             filler_dict['type_id'] = str(x.type_id)
             filler_dict['type_name'] = str(x.type_name)
             filler_dict['total'] = str(x.total)
@@ -104,8 +121,60 @@ def bookRoom(request, hotel_id, room_type):
     except:
         pass
 
-    return HttpResponse('some_error')
+    return HttpResponse(json.dumps({'success': 'false', 'room_no': 'NA'}), content_type='application/json')
 
 
-def unlock_gate(request, hotel_id, room_number, room_type):
+def unlock_gate(request, hotel_id, room_number):
+    print "correct"
     return HttpResponse(json.dumps({'success': 'true'}), content_type='application/json')
+
+
+def roomFunctions(request, hotel_id, room_number):
+
+    user_id = request.GET.get('user_id')
+
+    a = Room.objects.get(room_number=room_number, hotel_id=hotel_id)
+    print a.room_number, a.hotel_id
+    if a.user == user_id:
+        pass
+    else:
+        print "auth error"
+        return HttpResponse(json.dumps({'success': 'false'}), content_type='application/json')
+
+    cmd = request.GET.get('cmd')
+
+    #print user_id, room_number, hotel_id
+
+    if cmd == 'control':
+        print "hello"
+        device = request.GET.get('device')
+        status = request.GET.get('status')
+        url = 'http://192.168.7.2:5000/room?device='+str(device)+'&status='+str(status)
+        data = requests.get(url)
+        return HttpResponse(statusOfAppliances())
+
+    if cmd == 'status':
+        return HttpResponse(statusOfAppliances())
+
+    try:
+        #print "==========="
+        a = Room.objects.get(room_number=room_number, hotel_id=hotel_id)
+        print a.room_number, a.hotel_id
+        if a.user == user_id:
+            #print "ASASDSAD"
+            data = requests.get('http://192.168.7.2:5000/room?device=0&status=1')
+            #print data
+            return HttpResponse(json.dumps({'success': 'true'}), content_type='application/json')
+        else:
+            pass
+    except:
+        print "error"
+        pass
+
+    return HttpResponse(json.dumps({'success': 'false'}), content_type='application/json')
+
+
+def statusOfAppliances():
+    data = requests.get('http://192.168.7.2:5000/status')
+    print data
+    return json.dumps(data.json())
